@@ -12,7 +12,9 @@ class Message (BaseModel):
     id: str 
     user_id: str
     pdf_id : str
-    text :str
+    question:str
+    answer:str
+    
     created_at :datetime = datetime.utcnow
 
 class Pdf (BaseModel):
