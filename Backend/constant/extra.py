@@ -1,4 +1,3 @@
-
 from models.model import User
 from pypdf import PdfReader 
 from passlib.context import CryptContext
@@ -26,7 +25,8 @@ def verify_password(password:str , has_Password:str):
 
 def get_user_by_email(email: str) -> User | None:
     data = user_collection.find_one({"email": email})
-    data["_id"] = str(data['_id'])
+    if data is not None:
+        data["_id"] = str(data['_id'])
     return data
 
 def save_user(user: dict):
@@ -43,3 +43,4 @@ def save_pdf(user: dict):
     # Convert ObjectId to str for JSON
     saved_user["_id"] = str(saved_user["_id"])
     return saved_user
+

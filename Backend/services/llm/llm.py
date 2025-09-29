@@ -67,7 +67,7 @@ def retrive_chunks(user_id, user_question, top_k=5):
 
     # Sort by similarity
     similarities.sort(reverse=True, key=lambda x: x[0])
-    return [chunk for _, chunk in similarities[:top_k]]  # top K
+    return [chunk for _, chunk in similarities[:top_k]] 
 
     
 
@@ -123,7 +123,7 @@ def takeLLMresponse(user_id, user_question):
 
   
     ollama_response = completion(
-        model="ollama/llama3.2:3b",
+        model="ollama/gemma3:270m",
         messages=[{"role": "user", "content": final_prompt}]
     )
     answer = ollama_response.choices[0].message.content
@@ -136,7 +136,6 @@ def takeLLMresponse(user_id, user_question):
         "question":user_question,
         "answer": answer,
         "created_at":datetime.utcnow()
-
     })
 
     

@@ -1,35 +1,85 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// App.tsx
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import { Toaster } from "sonner";
+import { useAuth } from "@/quries/quries";
+import ChatPage from "./components/Hero";
+import LoginForm from "./components/pages/login";
+import SignupForm from "./components/pages/signup";
+import ChatHistory from "./components/Histroy";
+
+// Protected Route Component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { token } = useAuth();
+  const location = useLocation();
+
+  if (!token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { token } = useAuth();
+
+  if (token) {
+    return <Navigate to="/chat" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
+
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <LoginForm />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <SignupForm />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            <ProtectedRoute>
+              <ChatHistory />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+
+      <Toaster position="top-right" richColors />
+    </Router>
+  );
 }
 
-export default App
+export default App;
