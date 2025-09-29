@@ -1,44 +1,25 @@
-import type { ChatRequest } from "@/types/types";
 import axios from "axios";
 
 const API_URL = "http://localhost:8000";
 
-interface ChatResponse {
-  answer: string;
-  success: boolean;
-}
-
-interface EmbeddingResponse {
-  status: string;
-}
-
 export const useChat = (token: string) => {
-  const sendMessage = async (question: string): Promise<ChatResponse> => {
-    const chatRequest: ChatRequest = {
-      user_question: question,
-    };
+  const sendMessage = async (question: string, file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("user_question", question);
+    formData.append("file", file);
 
-    const res = await axios.post<ChatResponse>(`${API_URL}/llm`, chatRequest, {
+    const res = await axios.post(`${API_URL}/llm`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
       },
     });
 
+    // If backend returns just the answer as string
     return res.data;
+    // If backend returns { answer: string }
+    // return res.data.answer;
   };
 
-  const generateEmbeddings = async (): Promise<EmbeddingResponse> => {
-    const res = await axios.post<EmbeddingResponse>(
-      `${API_URL}/inset`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return res.data;
-  };
-
-  return { sendMessage, generateEmbeddings };
+  return { sendMessage };
 };

@@ -3,48 +3,37 @@ import { useAuth } from "@/quries/quries";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useFileUpload } from "@/quries/fileUpload";
+
 import { useChat } from "@/quries/useChat";
 import { Link } from "react-router-dom";
 import type { AxiosError } from "axios";
 
-interface ChatResponse {
-  answer: string;
-  success: boolean;
-}
 export default function ChatPage() {
   const { token, user, logout } = useAuth();
-  const { sendMessage, generateEmbeddings } = useChat(token!);
-  const { uploadFile } = useFileUpload(token!);
+  const { sendMessage } = useChat(token!);
 
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<{ q: string; a: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasUploadedFile, setHasUploadedFile] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
 
   const handleSend = async () => {
-    if (!hasUploadedFile) {
+    if (!file) {
       toast.error("Please upload a PDF file first");
       return;
     }
-
     if (!question.trim()) {
       toast.error("Please enter a question");
       return;
     }
-
     setLoading(true);
     try {
-      // Add user's question immediately
       setMessages((prev) => [...prev, { q: question, a: "..." }]);
 
-      const response: ChatResponse = await sendMessage(question);
+      const answer = await sendMessage(question, file);
 
-      // Update the last message with the bot's response
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { q: question, a: response.answer },
-      ]);
+      setMessages((prev) => [...prev.slice(0, -1), { q: question, a: answer }]);
 
       setQuestion("");
     } catch (err) {
@@ -53,7 +42,6 @@ export default function ChatPage() {
       const errorMessage = error.message || "Failed to send message";
       toast.error(errorMessage);
 
-      // Remove the pending message on error
       setMessages((prev) => prev.slice(0, -1));
     } finally {
       setLoading(false);
@@ -62,40 +50,16 @@ export default function ChatPage() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+      const selectedFile = e.target.files[0];
 
-      if (file.type !== "application/pdf") {
+      if (selectedFile.type !== "application/pdf") {
         toast.error("Please upload a PDF file");
         return;
       }
 
-      setLoading(true);
-      try {
-        // Upload file
-        await uploadFile(file);
-        toast.success("File uploaded successfully!");
-
-        // Generate embeddings
-        const embedPromise = generateEmbeddings();
-        toast.loading("Generating embeddings...", {
-          duration: Infinity, // Keep showing until completed
-        });
-
-        const embeddingRes = await embedPromise;
-        if (embeddingRes.status === "vector done") {
-          toast.success("Embeddings generated successfully!");
-          setHasUploadedFile(true);
-        }
-      } catch (err) {
-        const error = err as AxiosError<{ message?: string; detail?: string }>;
-
-        console.error("Operation failed:", error);
-        const errorMessage =
-          error.response?.data?.message || error.message || "Operation failed";
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false);
-      }
+      setFile(selectedFile); // <-- Just set the file, no embedding step
+      toast.success("File uploaded successfully!");
+      setHasUploadedFile(true);
     }
   };
 
@@ -109,6 +73,7 @@ export default function ChatPage() {
 
   const handleLogout = () => {
     logout();
+    // navigator
     toast.success("Logged out successfully!");
   };
 

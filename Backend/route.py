@@ -3,7 +3,7 @@ from datetime import datetime
 from bson import ObjectId
 
 from jwt_Str.access import verify_token
-from services.llm.llm import injestPdf, takeLLMresponse
+from services.llm.llm import  takeLLMresponse
 from services.file.fileService import get_File_histroy, getFileText, upload_file
 from services.user.dto import ChatRequest, LoginResponseDTO, UserSignupDTO, UserLoginDTO, UserResponseDTO
 from services.user.user_service import User_Service
@@ -45,17 +45,21 @@ def login(login: UserLoginDTO):
 def validToken(current_user:dict= Depends(verify_token)):
     print("current user",current_user)
 
-@app.post("/upload")
-def upload(file: UploadFile = File(...),current_user:dict= Depends(verify_token)):
-    return upload_file(file, current_user["user_id"])
+# @app.post("/upload")
+# def upload(file: UploadFile = File(...),current_user:dict= Depends(verify_token)):
+#     return upload_file(file, current_user["user_id"])
 
-@app.post("/inset")
-def chat(current_user:dict= Depends(verify_token)):
-    return injestPdf(current_user['user_id'])
-
+# @app.post("/inset")
+# def chat(current_user:dict= Depends(verify_token)):
+#     return injestPdf(current_user['user_id'])
 @app.post("/llm")
-def chat(data:ChatRequest , current_user:dict= Depends(verify_token)):
-    return takeLLMresponse(current_user['user_id'],data.user_question)
+def chat(
+    user_question: str = Form(...),
+    file: UploadFile = File(...),
+    current_user: dict = Depends(verify_token)
+):
+    return takeLLMresponse(current_user['user_id'], user_question, file)
+
 
 @app.get("/chat-history")
 def get_chat_history(current_user: dict = Depends(verify_token)):
